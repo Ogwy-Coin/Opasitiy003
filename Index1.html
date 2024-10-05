@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Mini App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column; /* Markaziy joylash uchun vertikal yo'nalishda tartib */
+      align-items: center; /* Elementlarni gorizontal markazga joylash */
+      justify-content: center; /* Elementlarni vertikal markazga joylash */
+      height: 100vh;
+      margin: 0;
+      background-image: url('Kukamar.png'); /* Orqa fonga rasm qo'shish */
+      background-size: cover; /* Rasmni to'liq ekranga moslashtirish */
+      background-position: center; /* Rasmni markazda joylash */
+      color: white; /* Matn rangini oqga o'zgartirish */
+    }
+    .profile {
+      position: absolute;
+      top: 10px; /* Profilni yuqoriga joylash */
+      left: 10px; /* Profilni chapga joylash */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .profile img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Tugmani markazga joylash */
+    }
+    button {
+      width: 250px; /* Tugmaning o'lchovini 25% kattalashtirish */
+      height: 250px; /* Tugmaning balandligini 25% kattalashtirish */
+      cursor: pointer;
+      background-color: rgba(255, 255, 255, 0.7); /* Tugma rangini oq va shaffof qilish */
+      border: none; /* Tugma chetlarini olib tashlash */
+      border-radius: 50%; /* Tugmani yumaloq qilish */
+      position: relative; /* Tugma pozitsiyasini o'zgartirish */
+      overflow: hidden; /* Tugma ichidagi elementlarni cheklash */
+    }
+    button:hover {
+      background-color: rgba(255, 255, 255, 0.9); /* Tugma ustida bosilganda rangni o'zgartirish */
+    }
+    .coin {
+      width: 126.25%; /* Tanganing o'lchovini 25% kattalashtirish (101% * 1.25 = 126.25%) */
+      height: auto;
+      position: absolute; /* Tangani tugma ichida joylash */
+      top: 50%; /* Vertikal markazda joylash */
+      left: 50%; /* Gorizontal markazda joylash */
+      transform: translate(-50%, -50%); /* Markazlashtirish */
+    }
+    /* iOS qurilmalari uchun tanga o'lchovini o'zgartirish */
+    @media only screen and (max-width: 767px) and (orientation: portrait) {
+      .coin {
+        width: 100%; /* iOS qurilmalarida tangani to'liq kenglikda qilish */
+      }
+      button {
+        width: 200px; /* iOS qurilmalarida tugma kengligini o'zgartirish */
+        height: 200px; /* iOS qurilmalarida tugma balandligini o'zgartirish */
+      }
+    }
+    /* Android qurilmalari uchun tanga o'lchovini o'zgartirish */
+    @media only screen and (max-width: 767px) and (orientation: landscape) {
+      .coin {
+        width: 150%; /* Android qurilmalarida tangani kattalashtirish */
+      }
+      button {
+        width: 220px; /* Android qurilmalarida tugma kengligini o'zgartirish */
+        height: 220px; /* Android qurilmalarida tugma balandligini o'zgartirish */
+      }
+    }
+    /* Animatsiya uchun CSS */
+    .shake {
+      animation: shake 0.5s; /* Animatsiya davomiyligi */
+      animation-timing-function: ease-in-out; /* Animatsiya harakati */
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-7px); } /* 30% kuchaytirish */
+      50% { transform: translateX(7px); }
+      75% { transform: translateX(-7px); }
+      100% { transform: translateX(0); }
+    }
+    .counter {
+      font-size: 24px; /* Qancha bosilganini ko'rsatish yozuvi o'lchami */
+      margin-top: 10px; /* Tugma va counter orasidagi masofa */
+    }
+  </style>
+</head>
+<body>
+  <div class="profile">
+    <img id="profile-pic" src="" alt="Profile Picture">
+    <div id="username"></div>
+  </div>
+
+  <div class="button-container">
+    <button id="clickButton" onclick="incrementCounter()">
+      <img src="Ogwy.png" alt="Coin" class="coin"> <!-- Tanga surati -->
+    </button>
+    <div id="counter" class="counter">0000/1000</div> <!-- Qancha bosilganini ko'rsatish -->
+  </div>
+
+  <script>
+    let coins = 0; // Foydalanuvchi hisobidagi tangalar
+    const maxCoins = 500; // Maksimal tanga soni
+    let clickCount = 0; // Tugma qancha bosilgan
+
+    // Telegram foydalanuvchi ma'lumotlarini olish
+    window.Telegram.WebApp.onReady(function() {
+      const user = window.Telegram.WebApp.initDataUnsafe.user;
+      document.getElementById('profile-pic').src = user.photo_url || 'default-profile.png';
+      document.getElementById('username').innerText = `@${user.username || user.first_name}`;
+      loadUserData(user.username); // Foydalanuvchi ma'lumotlarini yuklash
+    });
+
+    function incrementCounter() {
+      if (coins < maxCoins) {
+        clickCount++; // Tugma bosilganda hisobni oshirish
+        coins++; // Har bosilganda 1 tanga qo'shish
+        updateCounter(); // Qancha bosilganini yangilash
+        
+        // Tugma qimirlatish
+        const button = document.getElementById('clickButton');
+        button.classList.add('shake'); // Animatsiya qo'shish
+        setTimeout(() => button.classList.remove('shake'), 500); // Animatsiyani olib tashlash
+
+        saveUserData(); // Foydalanuvchi ma'lumotlarini saqlash
+      } else {
+        alert('Siz 500 ta tangani olib bo‘ldingiz!');
+      }
+    }
+
+    // Qancha bosilganini yangilash
+    function updateCounter() {
+      document.getElementById('counter').innerText = `${clickCount.toString().padStart(4, '0')}/1000`; // Qancha bosilganini ko'rsatish
+    }
+
+    // Foydalanuvchi ma'lumotlarini yuklash
+    function loadUserData(username) {
+      fetch('users.json')
+        .then(response => response.json())
+        .then(data => {
+          const userData = data.users.find(user => user.username === username);
+          if (userData) {
+            coins = userData.coins; // Foydalanuvchi hisobidagi tangalarni yuklash
+            clickCount = userData.clickCount || 0; // Qancha bosilganini yuklash
+            updateCounter(); // Qancha bosilganini ko'rsatish
+          }
+        })
+        .catch(error => console.error('Xato:', error));
+    }
+
+    // Foydalanuvchi ma'lumotlarini saqlash
+    function saveUserData() {
+      const userData = {
+        username: document.getElementById('username').innerText.slice(1),
+        coins: coins,
+        clickCount: clickCount // Qancha bosilganini saqlash
+      };
+
+      fetch('save_user.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Foydalanuvchi ma\'lumotlari saqlandi:', data);
+      })
+      .catch(error => console.error('Xato:', error));
+    }
+  </script>
+</body>
+</html>
